@@ -1,4 +1,5 @@
-﻿using YoutubeToMusic.BLL;
+﻿using AngleSharp.Dom;
+using YoutubeToMusic.BLL;
 
 namespace YoutubeToMusic.TestConsole
 {
@@ -11,10 +12,30 @@ namespace YoutubeToMusic.TestConsole
             YoutubeExplodeClient youtubeExplodeClient = new YoutubeExplodeClient();
             Task.Run(async () =>
             {
+				//    await youtubeExplodeClient.ConvertFromURLAsync("https://www.youtube.com/watch?v=s1iBYOEnKhM");
+				string file = @"C:\Users\colli\Downloads\SomeSongs.txt";
+
+				// Store each line in array of strings 
+				string[] URLs = File.ReadAllLines(file);
+				List<string> errors = new();
+
+				foreach (string URL in URLs)
+				{
+					if (!Uri.IsWellFormedUriString(URL, UriKind.Absolute))
+					{
+						errors.Add(URL);
+						continue;
+					}
+					await youtubeExplodeClient.ConvertFromURLAsync(URL);
+				}
                 await youtubeExplodeClient.ConvertFromURLAsync("https://www.youtube.com/watch?v=PCp2iXA1uLE");
 
-                Console.WriteLine("Done :3");
+				foreach(string error in errors)
+				{
+					Console.WriteLine(error);
+				}
+				Console.WriteLine("Done :3");
             }).Wait();
-        }
+        }	
     }
 }
