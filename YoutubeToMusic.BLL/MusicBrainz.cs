@@ -18,10 +18,26 @@ namespace YoutubeToMusic.BLL
 
         public async Task<string> GetMusicBrainzId(string title, string artist)
         {
+            title = title.ToUpper().Replace("\"", "").Replace("MUSIC VIDEO", "");
+
+            if (title.Contains("|"))
+            {
+                var index = title.IndexOf('|');
+
+                title = title.Substring(0, index);
+            }
+
+            artist = artist.Replace("\"", "");
+
             string query = $"https://musicbrainz.org/ws/2/recording/?query=recording:\"{Uri.EscapeDataString(title)}\" AND artist:\"{Uri.EscapeDataString(artist)}\"&fmt=json";
 
             var q = new Query("Chrome", "19.99", "mailto:milton.waddams@initech.com");
-            var qq = await q.FindRecordingsAsync($"recording:\"{Uri.EscapeDataString(title)}\" AND artist:\"{Uri.EscapeDataString(artist)}");
+
+            var actualQuery = $"single AND {title}";
+            //var actualQuery = $"recording:\"{title}\"";
+            //actualQuery = Uri.EscapeDataString(actualQuery);
+
+            var qq = await q.FindRecordingsAsync(actualQuery);
 
             HttpResponseMessage response = await _httpClient.GetAsync(query);
             if (!response.IsSuccessStatusCode)

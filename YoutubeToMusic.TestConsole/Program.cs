@@ -13,21 +13,21 @@ namespace YoutubeToMusic.TestConsole
             Task.Run(async () =>
             {
 				//    await youtubeExplodeClient.ConvertFromURLAsync("https://www.youtube.com/watch?v=s1iBYOEnKhM");
-				string file = @"C:\Users\colli\Downloads\SomeSongs.txt";
+				//string file = @"C:\Users\colli\Downloads\SomeSongs.txt";
 
-				// Store each line in array of strings 
-				string[] URLs = File.ReadAllLines(file);
+				//// Store each line in array of strings 
+				//string[] URLs = File.ReadAllLines(file);
 				List<string> errors = new();
 
-				foreach (string URL in URLs)
-				{
-					if (!Uri.IsWellFormedUriString(URL, UriKind.Absolute))
-					{
-						errors.Add(URL);
-						continue;
-					}
-					await youtubeExplodeClient.ConvertFromURLAsync(URL);
-				}
+				//foreach (string URL in URLs)
+				//{
+				//	if (!Uri.IsWellFormedUriString(URL, UriKind.Absolute))
+				//	{
+				//		errors.Add(URL);
+				//		continue;
+				//	}
+				//	await youtubeExplodeClient.ConvertFromURLAsync(URL);
+				//}
                 await youtubeExplodeClient.ConvertFromURLAsync("https://www.youtube.com/watch?v=PCp2iXA1uLE");
 
 				foreach(string error in errors)
