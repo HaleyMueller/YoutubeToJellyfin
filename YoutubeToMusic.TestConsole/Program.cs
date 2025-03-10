@@ -11,7 +11,6 @@ namespace YoutubeToMusic.TestConsole
             Console.WriteLine("Hello, World!");
 
             YoutubeExplodeClient youtubeExplodeClient = new YoutubeExplodeClient();
-
             Task.Run(async () =>
             {
                 string videoURL = "";
@@ -29,6 +28,7 @@ namespace YoutubeToMusic.TestConsole
 						Console.WriteLine(error);
 					}
 				}
+                await youtubeExplodeClient.ConvertFromURLAsync("https://www.youtube.com/watch?v=PCp2iXA1uLE");
 
                 string playlistURL = "";
                 if (Uri.IsWellFormedUriString(playlistURL, UriKind.Absolute))

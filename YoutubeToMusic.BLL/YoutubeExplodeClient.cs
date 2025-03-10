@@ -9,10 +9,12 @@ namespace YoutubeToMusic.BLL
     {
         private YoutubeClient _client = new YoutubeClient();
         private string folderPath = @"C:\Users\colli\Downloads";
+        private MusicBrainz _musicBrainz = new MusicBrainz();
 
 		public YoutubeExplodeClient()
         {
             _client = new YoutubeClient();
+            _musicBrainz = new MusicBrainz();
         }
 
         public async Task ConvertFromVideoURLAsync(string URL)
@@ -25,6 +27,10 @@ namespace YoutubeToMusic.BLL
             var fullPath = Path.Combine(folderPath, MakeValidFileName($"{video.Title}.{streamInfo.Container}"));
 
 			await _client.Videos.Streams.DownloadAsync(streamInfo, fullPath);
+
+            FFMPEG.ConvertFile(fullPath, $"{video.Title}.ogg");
+
+            await _musicBrainz.GetMusicBrainzId(video.Title, video.Author.ChannelTitle);
         }
 
 		public async Task ConvertFromPlaylistURLAsync(string URL)
