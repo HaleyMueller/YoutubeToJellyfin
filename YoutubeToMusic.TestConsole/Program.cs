@@ -9,10 +9,9 @@ namespace YoutubeToMusic.TestConsole
             Console.WriteLine("Hello, World!");
 
             YoutubeExplodeClient youtubeExplodeClient = new YoutubeExplodeClient();
-
             Task.Run(async () =>
             {
-                await youtubeExplodeClient.ConvertFromURLAsync("https://www.youtube.com/watch?v=s1iBYOEnKhM");
+                await youtubeExplodeClient.ConvertFromURLAsync("https://www.youtube.com/watch?v=PCp2iXA1uLE");
 
                 Console.WriteLine("Done :3");
             }).Wait();
