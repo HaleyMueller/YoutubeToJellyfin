@@ -27,7 +27,7 @@ namespace YoutubeToMusic.BLL
 
 			await _client.Videos.Streams.DownloadAsync(streamInfo, fullPath);
 
-            FFMPEG.ConvertFile(filePath, $"{video.Title}.ogg");
+            FFMPEG.ConvertFile(fullPath, $"{video.Title}.ogg");
 
             await _musicBrainz.GetMusicBrainzId(video.Title, video.Author.ChannelTitle);
         }
