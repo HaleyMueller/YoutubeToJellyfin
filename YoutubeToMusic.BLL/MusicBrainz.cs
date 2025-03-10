@@ -10,52 +10,80 @@ namespace YoutubeToMusic.BLL
 {
     public class MusicBrainz
     {
-        HttpClient _httpClient;
+        //HttpClient _httpClient;
         public MusicBrainz()
         {
-            _httpClient = new HttpClient();
+            //_httpClient = new HttpClient();
         }
 
-        public async Task<string> GetMusicBrainzId(string title, string artist)
+        public void CreateDirectoriesAfterPicardWasScanned()
         {
-            title = title.ToUpper().Replace("\"", "").Replace("MUSIC VIDEO", "");
+            var folder = @"C:\Users\Haley\Desktop\test";
 
-            if (title.Contains("|"))
+            foreach (var filePath in Directory.GetFiles(folder))
             {
-                var index = title.IndexOf('|');
+                var file = TagLib.File.Create(filePath);
+                Console.WriteLine($"Artist: {file.Tag.FirstPerformer}");
+                Console.WriteLine($"Album: {file.Tag.Album}");
 
-                title = title.Substring(0, index);
+                var artistPath = Path.Combine(folder, string.Join(", ", file.Tag.Performers)).Trim();
+                var albumPath = Path.Combine(artistPath, file.Tag.Album);
+                var songPath = Path.Combine(albumPath, file.Tag.Title + "." + filePath.Split('.').Last());
+
+                if (System.IO.Directory.Exists(artistPath) == false)
+                {
+                    Directory.CreateDirectory(artistPath);
+                }
+
+                if (System.IO.Directory.Exists(albumPath) == false)
+                {
+                    Directory.CreateDirectory(albumPath);
+                }
+
+                File.Copy(filePath, songPath);
             }
+        }
 
-            artist = artist.Replace("\"", "");
+        //public async Task<string> GetMusicBrainzId(string title, string artist)
+        //{
+        //    title = title.ToUpper().Replace("\"", "").Replace("MUSIC VIDEO", "");
 
-            string query = $"https://musicbrainz.org/ws/2/recording/?query=recording:\"{Uri.EscapeDataString(title)}\" AND artist:\"{Uri.EscapeDataString(artist)}\"&fmt=json";
+        //    if (title.Contains("|"))
+        //    {
+        //        var index = title.IndexOf('|');
 
-            var q = new Query("Chrome", "19.99", "mailto:milton.waddams@initech.com");
+        //        title = title.Substring(0, index);
+        //    }
 
-            var actualQuery = $"single AND {title}";
-            //var actualQuery = $"recording:\"{title}\"";
-            //actualQuery = Uri.EscapeDataString(actualQuery);
+        //    artist = artist.Replace("\"", "");
 
-            var qq = await q.FindRecordingsAsync(actualQuery);
+        //    string query = $"https://musicbrainz.org/ws/2/recording/?query=recording:\"{Uri.EscapeDataString(title)}\" AND artist:\"{Uri.EscapeDataString(artist)}\"&fmt=json";
 
-            HttpResponseMessage response = await _httpClient.GetAsync(query);
-            if (!response.IsSuccessStatusCode)
-            {
-                Console.WriteLine($"Error: {response.StatusCode}");
-                return null;
-            }
+        //    var q = new Query("Chrome", "19.99", "mailto:milton.waddams@initech.com");
 
-            string json = await response.Content.ReadAsStringAsync();
-            using JsonDocument doc = JsonDocument.Parse(json);
-            JsonElement root = doc.RootElement;
+        //    var actualQuery = $"single AND {title}";
+        //    //var actualQuery = $"recording:\"{title}\"";
+        //    //actualQuery = Uri.EscapeDataString(actualQuery);
 
-            if (root.TryGetProperty("recordings", out JsonElement recordings) && recordings.GetArrayLength() > 0)
-            {
-                return recordings[0].GetProperty("id").GetString(); // First result's MusicBrainz ID
-            }
+        //    var qq = await q.FindRecordingsAsync(actualQuery);
 
-            return null;
+        //    HttpResponseMessage response = await _httpClient.GetAsync(query);
+        //    if (!response.IsSuccessStatusCode)
+        //    {
+        //        Console.WriteLine($"Error: {response.StatusCode}");
+        //        return null;
+        //    }
+
+        //    string json = await response.Content.ReadAsStringAsync();
+        //    using JsonDocument doc = JsonDocument.Parse(json);
+        //    JsonElement root = doc.RootElement;
+
+        //    if (root.TryGetProperty("recordings", out JsonElement recordings) && recordings.GetArrayLength() > 0)
+        //    {
+        //        return recordings[0].GetProperty("id").GetString(); // First result's MusicBrainz ID
+        //    }
+
+        //    return null;
         }
     }
 }
