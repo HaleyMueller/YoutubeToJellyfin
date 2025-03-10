@@ -1,4 +1,6 @@
 ﻿using YoutubeExplode;
+using YoutubeExplode.Common;
+using YoutubeExplode.Playlists;
 using YoutubeExplode.Videos.Streams;
 
 namespace YoutubeToMusic.BLL
@@ -15,13 +17,12 @@ namespace YoutubeToMusic.BLL
             _musicBrainz = new MusicBrainz();
         }
 
-        public async Task ConvertFromURLAsync(string URL)
+        public async Task ConvertFromVideoURLAsync(string URL)
         {
 			var video = await _client.Videos.GetAsync(URL);
 
             var streamManifest = await _client.Videos.Streams.GetManifestAsync(URL);
             var streamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
-            var stream = await _client.Videos.Streams.GetAsync(streamInfo);
 
             var fullPath = Path.Combine(folderPath, MakeValidFileName($"{video.Title}.{streamInfo.Container}"));
 
@@ -31,6 +32,35 @@ namespace YoutubeToMusic.BLL
 
             await _musicBrainz.GetMusicBrainzId(video.Title, video.Author.ChannelTitle);
         }
+
+		public async Task ConvertFromPlaylistURLAsync(string URL)
+		{
+			var videos = await _client.Playlists.GetVideosAsync(URL);
+
+			foreach(PlaylistVideo video in videos)
+			{
+				await ConvertFromVideoURLAsync(video.Url);
+			}
+			
+		}
+
+		public async Task<List<string>> ConvertFromTextFileAsync(string path)
+		{
+			string[] URLs = File.ReadAllLines(path);
+			List<string> errors = new();
+
+			foreach (string URL in URLs)
+			{
+				if (!Uri.IsWellFormedUriString(URL, UriKind.Absolute))
+				{
+					errors.Add(URL);
+					continue;
+				}
+				await ConvertFromVideoURLAsync(URL);
+			}
+
+			return errors;
+		}
 
 		private static string MakeValidFileName(string name)
 		{

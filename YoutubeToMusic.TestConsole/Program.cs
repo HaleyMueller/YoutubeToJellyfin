@@ -1,5 +1,6 @@
 ﻿using AngleSharp.Dom;
 using YoutubeToMusic.BLL;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace YoutubeToMusic.TestConsole
 {
@@ -12,28 +13,28 @@ namespace YoutubeToMusic.TestConsole
             YoutubeExplodeClient youtubeExplodeClient = new YoutubeExplodeClient();
             Task.Run(async () =>
             {
-				//    await youtubeExplodeClient.ConvertFromURLAsync("https://www.youtube.com/watch?v=s1iBYOEnKhM");
-				//string file = @"C:\Users\colli\Downloads\SomeSongs.txt";
+                string videoURL = "";
+                if (Uri.IsWellFormedUriString(videoURL, UriKind.Absolute))
+                {
+                    await youtubeExplodeClient.ConvertFromVideoURLAsync(videoURL);
+                }
 
-				//// Store each line in array of strings 
-				//string[] URLs = File.ReadAllLines(file);
-				List<string> errors = new();
-
-				//foreach (string URL in URLs)
-				//{
-				//	if (!Uri.IsWellFormedUriString(URL, UriKind.Absolute))
-				//	{
-				//		errors.Add(URL);
-				//		continue;
-				//	}
-				//	await youtubeExplodeClient.ConvertFromURLAsync(URL);
-				//}
-                await youtubeExplodeClient.ConvertFromURLAsync("https://www.youtube.com/watch?v=PCp2iXA1uLE");
-
-				foreach(string error in errors)
-				{
-					Console.WriteLine(error);
+				string filePath = @"";
+                if (File.Exists(filePath))
+                {
+					var errors = await youtubeExplodeClient.ConvertFromTextFileAsync(filePath);
+					foreach (string error in errors)
+					{
+						Console.WriteLine(error);
+					}
 				}
+
+                string playlistURL = "";
+                if (Uri.IsWellFormedUriString(playlistURL, UriKind.Absolute))
+                {
+				    await youtubeExplodeClient.ConvertFromPlaylistURLAsync(playlistURL);
+                }
+
 				Console.WriteLine("Done :3");
             }).Wait();
         }	
