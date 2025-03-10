@@ -28,7 +28,6 @@ namespace YoutubeToMusic.TestConsole
 						Console.WriteLine(error);
 					}
 				}
-                await youtubeExplodeClient.ConvertFromURLAsync("https://www.youtube.com/watch?v=PCp2iXA1uLE");
 
                 string playlistURL = "";
                 if (Uri.IsWellFormedUriString(playlistURL, UriKind.Absolute))
