@@ -30,13 +30,13 @@ namespace YoutubeToMusic.BLL
 
         public override string ToString()
         {
-            if (Exception != null)
+            if (Exception == null)
             {
-                return $"{this.DateTime.ToShortTimeString()} - {Message}";
+                return $"[ERROR] {this.DateTime.ToShortTimeString()} - {Message}";
             }
             else
             {
-                return $"{this.DateTime.ToShortTimeString()} - {Message} - {this.Exception.Message} - {this.Exception.StackTrace}";
+                return $"[ERROR] {this.DateTime.ToShortTimeString()} - {Message} - {this.Exception.Message} - {this.Exception.StackTrace}";
             }
         }
     }

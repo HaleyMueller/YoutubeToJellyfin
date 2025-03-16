@@ -23,7 +23,7 @@ namespace YoutubeToMusic.TestConsole
             Console.WriteLine("F => File");
             Console.Write(">");
 
-            while (selection != null) 
+            while (selection == null) 
             {
                 var input = Console.ReadLine();
 
@@ -89,7 +89,9 @@ namespace YoutubeToMusic.TestConsole
 
                 foreach (var errorModel in errors)
                 {
+                    Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine(errorModel.ToString());
+                    Console.ForegroundColor = ConsoleColor.White;
                 }
             }).Wait();
 
@@ -99,9 +101,11 @@ namespace YoutubeToMusic.TestConsole
             MusicBrainz _musicBrainz = new MusicBrainz();
             var errors = _musicBrainz.CreateDirectoriesAfterPicardWasScanned();
 
-            foreach (var error in errors) 
+            foreach (var errorModel in errors) 
             {
-                Console.WriteLine(error.ToString());
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(errorModel.ToString());
+                Console.ForegroundColor = ConsoleColor.White;
             }
 
             Console.WriteLine("Done again :3"); 

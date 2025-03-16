@@ -31,7 +31,7 @@ namespace YoutubeToMusic.BLL
                 process.WaitForExit();
             }
 
-            //File.Delete(inputFilePath);
+            File.Delete(inputFilePath);
 
             Console.WriteLine(File.Exists(outputFilePath) ? $"Conversion successful: {outputFilePath}" : "Conversion failed.");
         }
@@ -61,7 +61,7 @@ namespace YoutubeToMusic.BLL
                 process.WaitForExit();
             }
 
-            //File.Delete(inputFilePath);
+            File.Delete(inputFilePath);
 
             Console.WriteLine(File.Exists(outputFilePath) ? $"Conversion successful: {outputFilePath}" : "Conversion failed.");
         }
@@ -91,7 +91,7 @@ namespace YoutubeToMusic.BLL
                 process.WaitForExit();
             }
 
-            //File.Delete(inputFilePath);
+            File.Delete(inputFilePath);
 
             Console.WriteLine(File.Exists(outputFilePath) ? $"Conversion successful: {outputFilePath}" : "Conversion failed.");
         }

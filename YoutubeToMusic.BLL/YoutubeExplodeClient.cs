@@ -98,17 +98,15 @@ namespace YoutubeToMusic.BLL
                 int height = image.Height;
 
                 // Check if each border is a solid color
-                bool leftSolid = IsSolidColor(image, 0, 0, 1, height);
-                bool rightSolid = IsSolidColor(image, width - 1, 0, 1, height);
+                bool leftTopSolid = IsSolidColor(image, 0, 0, 1, height);
+                bool rightTopSolid = IsSolidColor(image, width - 1, 0, 1, height);
 
-                if (leftSolid && rightSolid)
+                if (leftTopSolid && rightTopSolid)
                 {
-                    Console.WriteLine("The image has a solid border."); 
                     return true;
                 }
                 else
                 {
-                    Console.WriteLine("The image does not have a solid border."); 
                     return false;
                 }
             }
