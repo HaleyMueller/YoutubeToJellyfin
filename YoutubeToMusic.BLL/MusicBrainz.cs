@@ -22,25 +22,32 @@ namespace YoutubeToMusic.BLL
 
             foreach (var filePath in Directory.GetFiles(folder))
             {
-                var file = TagLib.File.Create(filePath);
-                Console.WriteLine($"Artist: {file.Tag.FirstPerformer}");
-                Console.WriteLine($"Album: {file.Tag.Album}");
-
-                var artistPath = Path.Combine(folder, string.Join(", ", file.Tag.Performers)).Trim();
-                var albumPath = Path.Combine(artistPath, file.Tag.Album);
-                var songPath = Path.Combine(albumPath, file.Tag.Title + "." + filePath.Split('.').Last());
-
-                if (System.IO.Directory.Exists(artistPath) == false)
+                try
                 {
-                    Directory.CreateDirectory(artistPath);
-                }
+                    var file = TagLib.File.Create(filePath);
+                    Console.WriteLine($"Artist: {file.Tag.FirstPerformer}");
+                    Console.WriteLine($"Album: {file.Tag.Album}");
 
-                if (System.IO.Directory.Exists(albumPath) == false)
+                    var artistPath = Path.Combine(folder, string.Join(", ", file.Tag.Performers)).Trim();
+                    var albumPath = Path.Combine(artistPath, file.Tag.Album);
+                    var songPath = Path.Combine(albumPath, file.Tag.Title + "." + filePath.Split('.').Last());
+
+                    if (System.IO.Directory.Exists(artistPath) == false)
+                    {
+                        Directory.CreateDirectory(artistPath);
+                    }
+
+                    if (System.IO.Directory.Exists(albumPath) == false)
+                    {
+                        Directory.CreateDirectory(albumPath);
+                    }
+
+                    File.Copy(filePath, songPath);
+                }
+                catch (Exception ex)
                 {
-                    Directory.CreateDirectory(albumPath);
+                    Console.WriteLine(ex);
                 }
-
-                File.Copy(filePath, songPath);
             }
         }
 
@@ -84,6 +91,6 @@ namespace YoutubeToMusic.BLL
         //    }
 
         //    return null;
-        }
+        //}
     }
 }

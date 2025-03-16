@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="MetaBrainz.MusicBrainz" Version="6.1.0" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.7" />
     <PackageReference Include="TagLibSharp" Version="2.3.0" />
     <PackageReference Include="YoutubeExplode" Version="6.5.3" />
   </ItemGroup>
