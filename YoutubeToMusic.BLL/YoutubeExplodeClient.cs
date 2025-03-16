@@ -81,6 +81,8 @@ namespace YoutubeToMusic.BLL
                 file.Tag.Pictures = new TagLib.Picture[] { new TagLib.Picture(convertedThumbnailPath) };
                 file.Save();
                 Console.WriteLine($"File tagged: {file.Tag.Title} {file.Tag.Performers?.FirstOrDefault()}");
+
+                File.Delete(convertedThumbnailPath);
             }
             catch (Exception ex)
             {
