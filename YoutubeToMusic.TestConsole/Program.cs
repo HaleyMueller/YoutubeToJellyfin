@@ -8,42 +8,111 @@ namespace YoutubeToMusic.TestConsole
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello, World!");
+
+            Selection? selection = null;
+
+            Console.WriteLine("Youtube downloader extreme edition 😎");
+            Console.WriteLine("------------------------");
+            Console.WriteLine("");
+            Console.WriteLine("Type a character for command");
+            Console.WriteLine("");
+            Console.WriteLine("------------------------");
+            Console.WriteLine("");
+            Console.WriteLine("P => Playlist");
+            Console.WriteLine("V => Video");
+            Console.WriteLine("F => File");
+            Console.Write(">");
+
+            while (selection != null) 
+            {
+                var input = Console.ReadLine();
+
+                switch (input.ToUpper())
+                {
+                    case "P":
+                    case "PLAYLIST":
+                        selection = Selection.Playlist;
+                        break;
+                    case "V":
+                    case "VIDEO":
+                        selection = Selection.Video;
+                        break;
+                    case "F":
+                    case "FILE":
+                        selection = Selection.File;
+                        break;
+                    default:
+                        Console.WriteLine("Wrong command. Please try again");
+                        Console.Write(">");
+                        break;
+                }
+            }
+
+            Console.WriteLine($"You selected {selection.ToString()}");
+            Console.Write($"Give me your link/file path :) >");
+
+            var param = Console.ReadLine();
 
             YoutubeExplodeClient youtubeExplodeClient = new YoutubeExplodeClient();
             Task.Run(async () =>
             {
-                string videoURL = "https://www.youtube.com/watch?v=5mhVBxfIuKw";
-                if (Uri.IsWellFormedUriString(videoURL, UriKind.Absolute))
+                var errors = new List<ErrorModel>();
+
+                switch (selection)
                 {
-                    await youtubeExplodeClient.ConvertFromVideoURLAsync(videoURL);
+                    case Selection.Playlist:
+                        if (Uri.IsWellFormedUriString(param, UriKind.Absolute))
+                        {
+                            errors = await youtubeExplodeClient.ConvertFromPlaylistURLAsync(param);
+                        }
+                        break;
+                    case Selection.Video:
+                        if (Uri.IsWellFormedUriString(param, UriKind.Absolute))
+                        {
+                            var errorModel = await youtubeExplodeClient.ConvertFromVideoURLAsync(param);
+
+                            if (errorModel != null)
+                            {
+                                errors.Add(errorModel);
+                            }
+                        }
+                        break;
+                    case Selection.File:
+                        if (File.Exists(param))
+                        {
+                            errors = await youtubeExplodeClient.ConvertFromTextFileAsync(param);
+                        }
+                        break;
                 }
 
-                //string filePath = @"";
-                //            if (File.Exists(filePath))
-                //            {
-                //	var errors = await youtubeExplodeClient.ConvertFromTextFileAsync(filePath);
-                //	foreach (string error in errors)
-                //	{
-                //		Console.WriteLine(error);
-                //	}
-                //}
-
-                //        string playlistURL = "https://www.youtube.com/watch?v=NIioTc_Yz_0&list=PL_s6uLLEod9SEyueU6E5-d5uEb5qccAGJ&pp=gAQB";
-                //        if (Uri.IsWellFormedUriString(playlistURL, UriKind.Absolute))
-                //        {
-                //await youtubeExplodeClient.ConvertFromPlaylistURLAsync(playlistURL);
-                //        }
-
                 Console.WriteLine("Done :3");
+
+                foreach (var errorModel in errors)
+                {
+                    Console.WriteLine(errorModel.ToString());
+                }
             }).Wait();
 
             Console.WriteLine("Press any key once you finished with Picard scanning");
             Console.ReadKey();
+
             MusicBrainz _musicBrainz = new MusicBrainz();
-            _musicBrainz.CreateDirectoriesAfterPicardWasScanned();
+            var errors = _musicBrainz.CreateDirectoriesAfterPicardWasScanned();
+
+            foreach (var error in errors) 
+            {
+                Console.WriteLine(error.ToString());
+            }
+
             Console.WriteLine("Done again :3"); 
             Console.ReadKey();
         }	
+
+        enum Selection
+        {
+            Playlist,
+            Video,
+            File
+        }
     }
 }

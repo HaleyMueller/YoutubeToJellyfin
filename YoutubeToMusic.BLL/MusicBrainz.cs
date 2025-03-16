@@ -16,8 +16,9 @@ namespace YoutubeToMusic.BLL
             //_httpClient = new HttpClient();
         }
 
-        public void CreateDirectoriesAfterPicardWasScanned()
+        public List<ErrorModel> CreateDirectoriesAfterPicardWasScanned()
         {
+            List<ErrorModel> ret = new List<ErrorModel>();
             var folder = @"C:\Users\Haley\Desktop\test";
 
             foreach (var filePath in Directory.GetFiles(folder))
@@ -46,9 +47,11 @@ namespace YoutubeToMusic.BLL
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex);
+                    ret.Add(new ErrorModel(ex));
                 }
             }
+
+            return ret;
         }
 
         //public async Task<string> GetMusicBrainzId(string title, string artist)

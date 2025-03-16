@@ -21,64 +21,73 @@ namespace YoutubeToMusic.BLL
             _client = new YoutubeClient();
         }
 
-        public async Task ConvertFromVideoURLAsync(string URL)
+        public async Task<ErrorModel> ConvertFromVideoURLAsync(string URL)
         {
-			Console.WriteLine($"Starting download for: {URL}");
-
-			var video = await _client.Videos.GetAsync(URL);
-
-            var streamManifest = await _client.Videos.Streams.GetManifestAsync(URL);
-            var streamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
-
-            var fullPath = Path.Combine(folderPath, MakeValidFileName($"{video.Title}.{streamInfo.Container}"));
-
-			await _client.Videos.Streams.DownloadAsync(streamInfo, fullPath);
-
-            Console.WriteLine($"Downloaded from video successfully: {URL}");
-
-            var thumbnailURL = video.Thumbnails.GetWithHighestResolution().Url;
-			string thumbnailPath = Path.Combine(folderPath, $"{Guid.NewGuid().ToString()}.{thumbnailURL.Split(".").Last()}");
-
-			var convertedAudioPath = Path.Combine(folderPath, MakeValidFileName($"{video.Title}.ogg"));
-
-            Console.WriteLine($"Coverting in ffmpeg: {fullPath}");
-            FFMPEG.ConvertFile(fullPath, convertedAudioPath);
-            Console.WriteLine($"Converstion done. Made new file: {convertedAudioPath}");
-
-			Uri uri = new Uri(thumbnailURL);
-            thumbnailPath = Path.Combine(folderPath, MakeValidFileName(video.Id+"."+uri.AbsolutePath.Split('.').Last()));
-
-            Console.WriteLine($"Thumbnail downloading: {thumbnailURL}");
-            using (WebClient client = new WebClient())
-			{
-				client.DownloadFile(new Uri(thumbnailURL), thumbnailPath);
-			}
-            Console.WriteLine($"Thumbnail done downloading: {thumbnailPath}");
-
-			var convertedThumbnailPath = Path.Combine(folderPath, MakeValidFileName($"{video.Id}.png"));
-
-            var hasSolidBorders = HasSolidBorders(thumbnailPath);
-            Console.WriteLine($"Thumbnail is {(hasSolidBorders ? "" : "not")} a square format");
-
-            if (hasSolidBorders)
+            try
             {
-                Console.WriteLine($"Thumbnail is being clipped into a square format");
-                FFMPEG.ConvertToSquarePngByTrimmingBorders(thumbnailPath, convertedThumbnailPath);
+                Console.WriteLine($"Starting download for: {URL}");
+
+                var video = await _client.Videos.GetAsync(URL);
+
+                var streamManifest = await _client.Videos.Streams.GetManifestAsync(URL);
+                var streamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
+
+                var fullPath = Path.Combine(folderPath, MakeValidFileName($"{video.Title}.{streamInfo.Container}"));
+
+                await _client.Videos.Streams.DownloadAsync(streamInfo, fullPath);
+
+                Console.WriteLine($"Downloaded from video successfully: {URL}");
+
+                var thumbnailURL = video.Thumbnails.GetWithHighestResolution().Url;
+                string thumbnailPath = Path.Combine(folderPath, $"{Guid.NewGuid().ToString()}.{thumbnailURL.Split(".").Last()}");
+
+                var convertedAudioPath = Path.Combine(folderPath, MakeValidFileName($"{video.Title}.ogg"));
+
+                Console.WriteLine($"Coverting in ffmpeg: {fullPath}");
+                FFMPEG.ConvertFile(fullPath, convertedAudioPath);
+                Console.WriteLine($"Converstion done. Made new file: {convertedAudioPath}");
+
+                Uri uri = new Uri(thumbnailURL);
+                thumbnailPath = Path.Combine(folderPath, MakeValidFileName(video.Id + "." + uri.AbsolutePath.Split('.').Last()));
+
+                Console.WriteLine($"Thumbnail downloading: {thumbnailURL}");
+                using (WebClient client = new WebClient())
+                {
+                    client.DownloadFile(new Uri(thumbnailURL), thumbnailPath);
+                }
+                Console.WriteLine($"Thumbnail done downloading: {thumbnailPath}");
+
+                var convertedThumbnailPath = Path.Combine(folderPath, MakeValidFileName($"{video.Id}.png"));
+
+                var hasSolidBorders = HasSolidBorders(thumbnailPath);
+                Console.WriteLine($"Thumbnail is {(hasSolidBorders ? "" : "not")} a square format");
+
+                if (hasSolidBorders)
+                {
+                    Console.WriteLine($"Thumbnail is being clipped into a square format");
+                    FFMPEG.ConvertToSquarePngByTrimmingBorders(thumbnailPath, convertedThumbnailPath);
+                }
+                else
+                {
+                    Console.WriteLine($"Thumbnail is being squished into a square format");
+                    FFMPEG.ConvertToSqaurePngByShrinking(thumbnailPath, convertedThumbnailPath);
+                }
+
+                Console.WriteLine($"Tagging file: {convertedAudioPath}");
+                var file = TagLib.File.Create(convertedAudioPath);
+                file.Tag.Title = video.Title;
+                file.Tag.Performers = new string[] { video.Author.Title };
+                file.Tag.Album = "UNKNOWN";
+                file.Tag.Pictures = new TagLib.Picture[] { new TagLib.Picture(convertedThumbnailPath) };
+                file.Save();
+                Console.WriteLine($"File tagged: {file.Tag.Title} {file.Tag.Performers?.FirstOrDefault()}");
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine($"Thumbnail is being squished into a square format");
-                FFMPEG.ConvertToSqaurePngByShrinking(thumbnailPath, convertedThumbnailPath);
+                return new ErrorModel(ex);
             }
 
-            Console.WriteLine($"Tagging file: {convertedAudioPath}");
-            var file = TagLib.File.Create(convertedAudioPath);
-            file.Tag.Title = video.Title;
-			file.Tag.Performers = new string[] { video.Author.Title };
-			file.Tag.Album = "UNKNOWN";
-			file.Tag.Pictures = new TagLib.Picture[] { new TagLib.Picture(convertedThumbnailPath) };
-			file.Save();
-            Console.WriteLine($"File tagged: {file.Tag.Title} {file.Tag.Performers?.FirstOrDefault()}");
+            return null;
         }
 
 		static bool HasSolidBorders(string imagePath)
@@ -121,31 +130,45 @@ namespace YoutubeToMusic.BLL
             return true; // All pixels in this region are the same
         }
 
-        public async Task ConvertFromPlaylistURLAsync(string URL)
+        public async Task<List<ErrorModel>> ConvertFromPlaylistURLAsync(string URL)
 		{
+            var errors = new List<ErrorModel>();
 			var videos = await _client.Playlists.GetVideosAsync(URL);
 
 			foreach(PlaylistVideo video in videos)
 			{
-				await ConvertFromVideoURLAsync(video.Url);
+				var error = await ConvertFromVideoURLAsync(video.Url);
+
+                if (error != null)
+                {
+                    errors.Add(error);
+                }
 			}
-			
+
+            return errors;
 		}
 
-		public async Task<List<string>> ConvertFromTextFileAsync(string path)
+		public async Task<List<ErrorModel>> ConvertFromTextFileAsync(string path)
 		{
 			string[] URLs = File.ReadAllLines(path);
-			List<string> errors = new();
+            //List<string> errors = new();
+            var errors = new List<ErrorModel>();
 
-			foreach (string URL in URLs)
+            foreach (string URL in URLs)
 			{
 				if (!Uri.IsWellFormedUriString(URL, UriKind.Absolute))
 				{
-					errors.Add(URL);
+					errors.Add(new ErrorModel($"Incorrect URI format for: {URL}"));
 					continue;
 				}
-				await ConvertFromVideoURLAsync(URL);
-			}
+
+				var error = await ConvertFromVideoURLAsync(URL);
+
+                if (error != null)
+                {
+                    errors.Add(error);
+                }
+            }
 
 			return errors;
 		}
