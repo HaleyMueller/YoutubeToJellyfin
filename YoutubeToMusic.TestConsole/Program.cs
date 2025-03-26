@@ -8,6 +8,9 @@ namespace YoutubeToMusic.TestConsole
 
         static void Main(string[] args)
         {
+            if (Path.Exists(FolderPath) == false)
+                Directory.CreateDirectory(FolderPath);
+
             Selection? selection = null;
 
             Console.WriteLine("Youtube downloader extreme edition 😎");
