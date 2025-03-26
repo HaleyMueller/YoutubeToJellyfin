@@ -13,11 +13,11 @@ namespace YoutubeToMusic.BLL
     public class YoutubeExplodeClient
     {
         private YoutubeClient _client = new YoutubeClient();
-        private string folderPath = @"C:\Users\Haley\Desktop\test";
+        public string FolderPath { get; private set; }
         
-
-		public YoutubeExplodeClient()
+		public YoutubeExplodeClient(string folderPath)
         {
+            FolderPath = folderPath;
             _client = new YoutubeClient();
         }
 
@@ -32,23 +32,23 @@ namespace YoutubeToMusic.BLL
                 var streamManifest = await _client.Videos.Streams.GetManifestAsync(URL);
                 var streamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
 
-                var fullPath = Path.Combine(folderPath, MakeValidFileName($"{video.Title}.{streamInfo.Container}"));
+                var fullPath = Path.Combine(FolderPath, MakeValidFileName($"{video.Title}.{streamInfo.Container}"));
 
                 await _client.Videos.Streams.DownloadAsync(streamInfo, fullPath);
 
                 Console.WriteLine($"Downloaded from video successfully: {URL}");
 
                 var thumbnailURL = video.Thumbnails.GetWithHighestResolution().Url;
-                string thumbnailPath = Path.Combine(folderPath, $"{Guid.NewGuid().ToString()}.{thumbnailURL.Split(".").Last()}");
+                string thumbnailPath = Path.Combine(FolderPath, $"{Guid.NewGuid().ToString()}.{thumbnailURL.Split(".").Last()}");
 
-                var convertedAudioPath = Path.Combine(folderPath, MakeValidFileName($"{video.Title}.ogg"));
+                var convertedAudioPath = Path.Combine(FolderPath, MakeValidFileName($"{video.Title}.ogg"));
 
                 Console.WriteLine($"Coverting in ffmpeg: {fullPath}");
                 FFMPEG.ConvertFile(fullPath, convertedAudioPath);
                 Console.WriteLine($"Converstion done. Made new file: {convertedAudioPath}");
 
                 Uri uri = new Uri(thumbnailURL);
-                thumbnailPath = Path.Combine(folderPath, MakeValidFileName(video.Id + "." + uri.AbsolutePath.Split('.').Last()));
+                thumbnailPath = Path.Combine(FolderPath, MakeValidFileName(video.Id + "." + uri.AbsolutePath.Split('.').Last()));
 
                 Console.WriteLine($"Thumbnail downloading: {thumbnailURL}");
                 using (WebClient client = new WebClient())
@@ -57,7 +57,7 @@ namespace YoutubeToMusic.BLL
                 }
                 Console.WriteLine($"Thumbnail done downloading: {thumbnailPath}");
 
-                var convertedThumbnailPath = Path.Combine(folderPath, MakeValidFileName($"{video.Id}.png"));
+                var convertedThumbnailPath = Path.Combine(FolderPath, MakeValidFileName($"{video.Id}.png"));
 
                 var hasSolidBorders = HasSolidBorders(thumbnailPath);
                 Console.WriteLine($"Thumbnail is {(hasSolidBorders ? "" : "not")} a square format");
@@ -114,6 +114,17 @@ namespace YoutubeToMusic.BLL
             }
         }
 
+        static bool AreColorsSimilar(Rgba32 c1, Rgba32 c2, float threshold)
+        {
+            float rDiff = c1.R - c2.R;
+            float gDiff = c1.G - c2.G;
+            float bDiff = c1.B - c2.B;
+
+            float distance = MathF.Sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
+
+            return distance < threshold;
+        }
+
         static bool IsSolidColor(Image<Rgba32> image, int startX, int startY, int width, int height)
         {
             Rgba32 firstPixel = image[startX, startY];
@@ -121,9 +132,12 @@ namespace YoutubeToMusic.BLL
             {
                 for (int x = startX; x < startX + width; x++)
                 {
-                    if (!image[x, y].Equals(firstPixel))
+
+                    var isSimilar = AreColorsSimilar(firstPixel, image[x, y], 10f);
+
+                    if (isSimilar == false)
                     {
-                        return false; // Found a different color, not a solid border
+                        return false;
                     }
                 }
             }

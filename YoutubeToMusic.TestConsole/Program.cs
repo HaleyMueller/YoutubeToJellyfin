@@ -1,14 +1,13 @@
-﻿using AngleSharp.Dom;
-using YoutubeToMusic.BLL;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+﻿using YoutubeToMusic.BLL;
 
 namespace YoutubeToMusic.TestConsole
 {
     internal class Program
     {
+        static string FolderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Music");
+
         static void Main(string[] args)
         {
-
             Selection? selection = null;
 
             Console.WriteLine("Youtube downloader extreme edition 😎");
@@ -53,7 +52,7 @@ namespace YoutubeToMusic.TestConsole
 
             var param = Console.ReadLine();
 
-            YoutubeExplodeClient youtubeExplodeClient = new YoutubeExplodeClient();
+            YoutubeExplodeClient youtubeExplodeClient = new YoutubeExplodeClient(FolderPath);
             Task.Run(async () =>
             {
                 var errors = new List<ErrorModel>();
