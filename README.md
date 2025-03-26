@@ -1,4 +1,4 @@
-# YoutubeToMusic
+# YoutubeToJellyfin
 A small cross platform program that can convert youtube video links, playlists, or a text file to download youtube music. It embeds the video thumbnail and trims if needed. Saves the file structure how Jellyfin would want it.
 
 ## Prerequisites
