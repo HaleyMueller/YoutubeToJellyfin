@@ -3,7 +3,7 @@ A small cross platform program that can convert youtube video links, playlists, 
 
 ## Features
 - Metadata for Title, Artist, Album art.
-- Auto detection and unfixing of the video thumbnail if it is the "Square image but imma make it a rectangle for ya"
+- Auto detection and correcting if the video thumbnail is in the "Square image but imma make it a rectangle for ya by doing a solid color on the border"
 - Auto pause at the end of video downloading for additional programs to apply metadata
 - Auto moves files into the Jellyfin folder format
 
