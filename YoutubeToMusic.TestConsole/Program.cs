@@ -100,7 +100,7 @@ namespace YoutubeToMusic.TestConsole
             Console.WriteLine("Press any key once you finished with Picard scanning");
             Console.ReadKey();
 
-            MusicBrainz _musicBrainz = new MusicBrainz();
+            MusicBrainz _musicBrainz = new MusicBrainz(FolderPath);
             var errors = _musicBrainz.CreateDirectoriesAfterPicardWasScanned();
 
             foreach (var errorModel in errors) 

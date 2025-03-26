@@ -11,17 +11,18 @@ namespace YoutubeToMusic.BLL
     public class MusicBrainz
     {
         //HttpClient _httpClient;
-        public MusicBrainz()
+        public string FolderPath { get; private set; }
+        public MusicBrainz(string folderPath)
         {
+            FolderPath = folderPath;
             //_httpClient = new HttpClient();
         }
 
         public List<ErrorModel> CreateDirectoriesAfterPicardWasScanned()
         {
             List<ErrorModel> ret = new List<ErrorModel>();
-            var folder = @"C:\Users\Haley\Desktop\test";
 
-            foreach (var filePath in Directory.GetFiles(folder))
+            foreach (var filePath in Directory.GetFiles(FolderPath))
             {
                 try
                 {
@@ -29,7 +30,7 @@ namespace YoutubeToMusic.BLL
                     Console.WriteLine($"Artist: {file.Tag.FirstPerformer}");
                     Console.WriteLine($"Album: {file.Tag.Album}");
 
-                    var artistPath = Path.Combine(folder, string.Join(", ", file.Tag.Performers)).Trim();
+                    var artistPath = Path.Combine(FolderPath, string.Join(", ", file.Tag.Performers)).Trim();
                     var albumPath = Path.Combine(artistPath, file.Tag.Album);
                     var songPath = Path.Combine(albumPath, MakeValidFileName(file.Tag.Title + "." + filePath.Split('.').Last()));
 
