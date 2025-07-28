@@ -1,6 +1,12 @@
 # YoutubeToJellyfin
 A small cross platform program that can convert youtube video links, playlists, or a text file to download youtube music. It embeds the video thumbnail and trims if needed. Saves the file structure how Jellyfin would want it.
 
+## Features
+- Metadata for Title, Artist, Album art.
+- Auto detection and correcting if the video thumbnail is in the "Square image but imma make it a rectangle for ya by doing a solid color on the border"
+- Auto pause at the end of video downloading for additional programs to apply metadata
+- Auto moves files into the Jellyfin folder format
+
 ## Prerequisites
 - If you are running the contained release, you don't need to install .NET. If you aren't, you need .NET 8 (Runtime for running it, and/or SDK for running developing the project) [link](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
 - FFMPEG runable from console [link](https://www.ffmpeg.org/download.html)
