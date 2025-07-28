@@ -30,8 +30,8 @@ namespace YoutubeToMusic.BLL
                     Console.WriteLine($"Artist: {file.Tag.FirstPerformer}");
                     Console.WriteLine($"Album: {file.Tag.Album}");
 
-                    var artistPath = Path.Combine(FolderPath, string.Join(", ", file.Tag.Performers)).Trim();
-                    var albumPath = Path.Combine(artistPath, file.Tag.Album);
+                    var artistPath = MakeValidDirName(Path.Combine(FolderPath, string.Join(", ", file.Tag.Performers)).Trim());
+                    var albumPath = MakeValidDirName(Path.Combine(artistPath, file.Tag.Album));
                     var songPath = Path.Combine(albumPath, MakeValidFileName(file.Tag.Title + "." + filePath.Split('.').Last()));
 
                     if (System.IO.Directory.Exists(artistPath) == false)
@@ -57,10 +57,12 @@ namespace YoutubeToMusic.BLL
 
         private static string MakeValidFileName(string name)
         {
-            string invalidChars = System.Text.RegularExpressions.Regex.Escape(new string(System.IO.Path.GetInvalidFileNameChars()));
-            string invalidRegStr = string.Format(@"([{0}]*\.+$)|([{0}]+)", invalidChars);
+            return string.Join("_", name.Split(Path.GetInvalidFileNameChars()));
+        }
 
-            return System.Text.RegularExpressions.Regex.Replace(name, invalidRegStr, "_");
+        private static string MakeValidDirName(string name)
+        {
+            return string.Join("_", name.Split(Path.GetInvalidPathChars()));
         }
 
         //public async Task<string> GetMusicBrainzId(string title, string artist)

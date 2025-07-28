@@ -32,7 +32,7 @@ namespace YoutubeToMusic.BLL
                 var streamManifest = await _client.Videos.Streams.GetManifestAsync(URL);
                 var streamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
 
-                var fullPath = Path.Combine(FolderPath, MakeValidFileName($"{video.Title}.{streamInfo.Container}"));
+                var fullPath = Path.Combine(FolderPath, MakeValidFileName($"{video.Title.Replace(".","")}.{streamInfo.Container}"));
 
                 await _client.Videos.Streams.DownloadAsync(streamInfo, fullPath);
 
@@ -41,7 +41,7 @@ namespace YoutubeToMusic.BLL
                 var thumbnailURL = video.Thumbnails.GetWithHighestResolution().Url;
                 string thumbnailPath = Path.Combine(FolderPath, $"{Guid.NewGuid().ToString()}.{thumbnailURL.Split(".").Last()}");
 
-                var convertedAudioPath = Path.Combine(FolderPath, MakeValidFileName($"{video.Title}.ogg"));
+                var convertedAudioPath = Path.Combine(FolderPath, MakeValidFileName($"{video.Title.Replace(".", "")}.ogg"));
 
                 Console.WriteLine($"Coverting in ffmpeg: {fullPath}");
                 FFMPEG.ConvertFile(fullPath, convertedAudioPath);
@@ -192,7 +192,9 @@ namespace YoutubeToMusic.BLL
 			string invalidChars = System.Text.RegularExpressions.Regex.Escape(new string(System.IO.Path.GetInvalidFileNameChars()));
 			string invalidRegStr = string.Format(@"([{0}]*\.+$)|([{0}]+)", invalidChars);
 
-			return System.Text.RegularExpressions.Regex.Replace(name, invalidRegStr, "_");
+            var ret = System.Text.RegularExpressions.Regex.Replace(name, invalidRegStr, "_");
+
+            return ret;
 		}
 	}
 }
