@@ -512,6 +512,9 @@ namespace YoutubeToMusic.BLL
 
             var ret = System.Text.RegularExpressions.Regex.Replace(name, invalidRegStr, "_");
 
+            ret = ret.Replace("\"", ""); //Linux lets you use quotes in file names but ffmpeg doesn't likey
+            ret = ret.Replace("'", ""); //Linux lets you use quotes in file names but ffmpeg doesn't likey
+
             return ret;
 		}
 
