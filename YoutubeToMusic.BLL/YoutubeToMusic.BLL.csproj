@@ -26,6 +26,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Programs\chromaprint\linux-arm64\fpcalc">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Programs\chromaprint\linux-x64\fpcalc">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Programs\chromaprint\osx-arm64\fpcalc">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Programs\chromaprint\osx-x64\fpcalc">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Programs\chromaprint\windows\fpcalc.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
