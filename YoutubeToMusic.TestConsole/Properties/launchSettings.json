@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "YoutubeToMusic.TestConsole": {
+      "commandName": "Project",
+      "commandLineArgs": "-v https://youtu.be/u7adbYXou8Q?list=RD6mgOsb9k4I4 -cf"
+    }
+  }
+}

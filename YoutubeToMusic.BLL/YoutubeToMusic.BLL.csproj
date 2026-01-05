@@ -7,14 +7,28 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MetaBrainz.MusicBrainz" Version="6.1.0" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.7" />
+    <PackageReference Include="MetaBrainz.MusicBrainz" Version="7.0.0" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
     <PackageReference Include="TagLibSharp" Version="2.3.0" />
-    <PackageReference Include="YoutubeExplode" Version="6.5.4" />
+    <PackageReference Include="YoutubeExplode" Version="6.5.6" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\YoutubeToMusic.DataEntities\YoutubeToMusic.DataEntities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Programs\chromaprint\linux-x64\" />
+    <Folder Include="Programs\chromaprint\linux-arm64\" />
+    <Folder Include="Programs\chromaprint\osx-arm64\" />
+    <Folder Include="Programs\chromaprint\osx-x64\" />
+    <Folder Include="Programs\chromaprint\windows\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Programs\chromaprint\windows\fpcalc.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
