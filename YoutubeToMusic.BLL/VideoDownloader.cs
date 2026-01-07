@@ -1,5 +1,6 @@
 ﻿using AngleSharp.Dom;
 using AngleSharp.Io;
+using MetaBrainz.MusicBrainz.Interfaces.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,9 +9,12 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using TagLib;
+using TagLib.Matroska;
 using YoutubeExplode.Common;
 using YoutubeExplode.Playlists;
 using YoutubeExplode.Videos;
+using YoutubeToMusic.DataEntities;
+using static YoutubeToMusic.BLL.MusicBrainz;
 
 namespace YoutubeToMusic.BLL
 {
@@ -197,10 +201,145 @@ namespace YoutubeToMusic.BLL
             }
             catch (Exception ex)
             {
-
+                ret.AddException(ex);
             }
 
             ret.Data = true;
+
+            return ret;
+        }
+
+        public async Task<DataEntities.DataResponse<bool>> MetaDataFolder(string path)
+        {
+            var ret = new DataEntities.DataResponse<bool>(path);
+
+            try
+            {
+                var files = System.IO.Directory.GetFiles(path);
+
+                foreach (var file in files)
+                {
+                    var response = await MetaDataFile(file);
+                    ret.ResponseMessages.AddRange(DataResponse<bool>.CopyMessages(response));
+                }
+            }
+            catch (Exception ex)
+            {
+                ret.AddException(ex);
+            }
+
+            return ret;
+        }
+
+        public async Task<DataEntities.DataResponse<bool>> MetaDataFile(string filePath) 
+        {
+            var ret = new DataEntities.DataResponse<bool>(filePath);
+
+            string albumArtURL = "";
+            string songTitle = "";
+            List<string> artists = new List<string>();
+            string album = "";
+            string id = "";
+            Dictionary<string, int> genres = new Dictionary<string, int>();
+            TimeSpan duration = TimeSpan.MinValue;
+            uint? track = null;
+            uint? year = null;
+            string MusicBrainzReleaseId = "", MusicBrainzTrackId = "", MusicBrainzReleaseArtistId = "";
+
+            try
+            {
+                Console.WriteLine("");
+                Console.WriteLine($"Starting metadata for: {filePath}");
+
+                var seconds = FFMPEG.GetDuration(filePath);
+                duration = TimeSpan.FromSeconds(seconds);
+
+                //fingerprint match it
+                var fingerprint = await _fingerprinter.Fingerprint(filePath);
+
+                if (fingerprint.HasError == false)
+                {
+                    if (fingerprint.Data != null && fingerprint.Data.results.Any())
+                    {
+                        Console.WriteLine($"Fingerprint{(fingerprint.Data.results.Count() > 1 ? "s" : "")} found: {fingerprint.Data.results.Count()}");
+
+                        var bestRecording = await _musicBrainz.BestRecording(fingerprint.Data.results.FirstOrDefault().recordings.Select(x => x.id).ToList(), duration);
+
+                        if (bestRecording.HasError == false)
+                        {
+                            songTitle = bestRecording.Data.Recording.Title;
+                            album = bestRecording.Data.Release.Title;
+                            artists = bestRecording.Data.Artists?.Select(x => x.Name).ToList();
+                            albumArtURL = bestRecording.Data.AlbumArtUri;
+                            genres = bestRecording.Data.Genres;
+                            id = bestRecording.Data.Recording.Id.ToString();
+
+                            if (bestRecording.Data.Recording.FirstReleaseDate != null && bestRecording.Data.Recording.FirstReleaseDate.Year != null)
+                                year = uint.Parse(bestRecording.Data.Recording.FirstReleaseDate.Year.ToString());
+
+                            MusicBrainzReleaseArtistId = bestRecording.Data.Artists.FirstOrDefault().Artist.Id.ToString();
+                            MusicBrainzTrackId = bestRecording.Data.Recording.Id.ToString();
+                            MusicBrainzReleaseId = bestRecording.Data.Release.Id.ToString();
+
+                            if (bestRecording.Data.Track != null)
+                                track = uint.Parse(bestRecording.Data.Track.Number);
+                        }
+                        else
+                            Console.WriteLine($"Fingerprint error. Couldn't find best recording");
+                    }
+                }
+
+                var thumbnailPath = "";
+                if (string.IsNullOrEmpty(albumArtURL) == false) //get album from musicbrainz
+                {
+                    thumbnailPath = await YoutubeExplodeClient.DownloadThumbnail(albumArtURL, id.Replace("-", ""), FolderPath, "png", false);
+                }
+
+                //taglib
+                Console.WriteLine($"Tagging file: {filePath}");
+                var file = TagLib.File.Create(filePath);
+                file.Tag.Title = YoutubeExplodeClient.MakeTagName(songTitle);
+                file.Tag.Performers = artists.ToArray();
+                file.Tag.Album = YoutubeExplodeClient.MakeTagName(album);
+
+                if (string.IsNullOrEmpty(MusicBrainzReleaseId) == false)
+                    file.Tag.MusicBrainzReleaseId = MusicBrainzReleaseId;
+                if (string.IsNullOrEmpty(MusicBrainzTrackId) == false)
+                    file.Tag.MusicBrainzTrackId = MusicBrainzTrackId;
+                if (string.IsNullOrEmpty(MusicBrainzReleaseArtistId) == false)
+                {
+                    file.Tag.MusicBrainzReleaseArtistId = MusicBrainzReleaseArtistId;
+                    file.Tag.MusicBrainzArtistId = MusicBrainzReleaseArtistId;
+                }
+
+                if (track.HasValue)
+                    file.Tag.Track = track.Value;
+
+                if (string.IsNullOrEmpty(thumbnailPath) == false)
+                {
+                    Picture picture = new Picture();
+                    picture.Type = PictureType.FrontCover;
+                    picture.MimeType = "image/png";
+                    picture.Description = "Cover";
+                    picture.Data = ByteVector.FromPath(thumbnailPath);
+
+                    file.Tag.Pictures = new TagLib.Picture[] { picture };
+                }
+
+                if (genres != null)
+                    file.Tag.Genres = genres.Where(x => x.Value >= 0).Select(x => x.Key).ToArray();
+
+                if (year.HasValue)
+                    file.Tag.Year = year.Value;
+
+                file.Save();
+                System.IO.File.Delete(thumbnailPath);
+                Console.WriteLine($"File tagged: {file.Tag.Title} {file.Tag.Performers?.FirstOrDefault()}");
+            }
+            catch (Exception ex)
+            {
+                return ret.AddException(ex);
+            }
 
             return ret;
         }
@@ -227,10 +366,10 @@ namespace YoutubeToMusic.BLL
 
         public async Task<DataEntities.DataResponse<bool>> ConvertFromTextFileAsync(string path)
         {
+            var ret = new DataEntities.DataResponse<bool>(path);
+            
             try
             {
-                var ret = new DataEntities.DataResponse<bool>(path);
-
                 string[] URLs = System.IO.File.ReadAllLines(path);
 
                 foreach (string URL in URLs)
@@ -250,7 +389,7 @@ namespace YoutubeToMusic.BLL
             }
             catch(Exception ex)
             {
-                return new DataEntities.DataResponse<bool>().AddException(ex);
+                return ret.AddException(ex);
             }
         }
 
@@ -292,9 +431,10 @@ namespace YoutubeToMusic.BLL
 
         public async Task<DataEntities.DataResponse<bool>> ConvertFromPlaylistURLAsync(string URL)
         {
+            var ret = new DataEntities.DataResponse<bool>(URL);
+
             try
             {
-                var ret = new DataEntities.DataResponse<bool>(URL);
                 var videos = await _youtubeClient._client.Playlists.GetVideosAsync(URL);
 
                 foreach (PlaylistVideo video in videos)
@@ -308,16 +448,17 @@ namespace YoutubeToMusic.BLL
             }
             catch (Exception ex)
             {
-                return new DataEntities.DataResponse<bool>().AddException(ex);
+                return ret.AddException(ex);
             }
         }
 
         public async Task<DataEntities.DataResponse<bool>> ConvertFromQueryFileAsync(string path)
         {
+            var ret = new DataEntities.DataResponse<bool>(path);
+
             try
             {
                 string[] Querys = System.IO.File.ReadAllLines(path);
-                var ret = new DataEntities.DataResponse<bool>(path);
 
                 foreach (string query in Querys)
                 {
@@ -333,7 +474,7 @@ namespace YoutubeToMusic.BLL
             }
             catch (Exception ex)
             {
-                return new DataEntities.DataResponse<bool>().AddException(ex);
+                return ret.AddException(ex);
             }
         }
     }

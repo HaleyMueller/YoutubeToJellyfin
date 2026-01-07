@@ -15,6 +15,8 @@ namespace YoutubeToMusic.TestConsole
             "--queryfile" or "-qf" => Selection.QueryFile,
             "--file" or "-f" => Selection.File,
             "--create-folders" or "-cf" => Selection.CreateFolders,
+            "--metadata-file" or "-mf" => Selection.MetaDataFile,
+            "--metadata-folder" or "-mr" => Selection.MetaDataFolder,
             _ => null
         };
 
@@ -22,12 +24,14 @@ namespace YoutubeToMusic.TestConsole
         {
             Console.WriteLine("""
                 Usage:
-                  -p  <playlistUrl>
-                  -v  <videoUrl>
-                  -q  "search query"
-                  -qf <queryFile.txt>
-                  -f  <urls.txt>
-                  -cf 
+                  -p  <playlistUrl> Youtube playlist URL
+                  -v  <videoUrl> Youtube video URL
+                  -q  "search query" Youtube query
+                  -qf <queryFile.txt> Reads youtube queries in a file and downloads each one
+                  -f  <urls.txt> Reads youtube urls in a file and downloads each one
+                  -cf Copies files to Jellyfin format folders
+                  -mf Applies metadata to a file
+                  -mr Applies metadata to each file in a folder
                 """);
         }
 
@@ -94,6 +98,19 @@ namespace YoutubeToMusic.TestConsole
                             response = await videoDownloader.ConvertFromTextFileAsync(param);
                         }
                         break;
+
+                    case Selection.MetaDataFile:
+                        if (File.Exists(param))
+                        {
+                            response = await videoDownloader.MetaDataFile(param);
+                        }
+                        break;
+                    case Selection.MetaDataFolder:
+                        if (File.Exists(param))
+                        {
+                            response = await videoDownloader.MetaDataFolder(param);
+                        }
+                        break;
                 }
 
                 foreach (var item in response.ResponseMessages)
@@ -151,7 +168,9 @@ namespace YoutubeToMusic.TestConsole
             File,
             Query,
             QueryFile,
-            CreateFolders
+            CreateFolders,
+            MetaDataFile,
+            MetaDataFolder
         }
 
         //static void InteractiveMode()
