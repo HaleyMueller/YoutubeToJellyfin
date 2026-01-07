@@ -283,58 +283,59 @@ namespace YoutubeToMusic.BLL
 
                             if (bestRecording.Data.Track != null)
                                 track = uint.Parse(bestRecording.Data.Track.Number);
+
+
+                            var thumbnailPath = "";
+                            if (string.IsNullOrEmpty(albumArtURL) == false) //get album from musicbrainz
+                            {
+                                thumbnailPath = await YoutubeExplodeClient.DownloadThumbnail(albumArtURL, id.Replace("-", ""), FolderPath, "png", false);
+                            }
+
+                            //taglib
+                            Console.WriteLine($"Tagging file: {filePath}");
+                            var file = TagLib.File.Create(filePath);
+                            file.Tag.Title = YoutubeExplodeClient.MakeTagName(songTitle);
+                            file.Tag.Performers = artists.ToArray();
+                            file.Tag.Album = YoutubeExplodeClient.MakeTagName(album);
+
+                            if (string.IsNullOrEmpty(MusicBrainzReleaseId) == false)
+                                file.Tag.MusicBrainzReleaseId = MusicBrainzReleaseId;
+                            if (string.IsNullOrEmpty(MusicBrainzTrackId) == false)
+                                file.Tag.MusicBrainzTrackId = MusicBrainzTrackId;
+                            if (string.IsNullOrEmpty(MusicBrainzReleaseArtistId) == false)
+                            {
+                                file.Tag.MusicBrainzReleaseArtistId = MusicBrainzReleaseArtistId;
+                                file.Tag.MusicBrainzArtistId = MusicBrainzReleaseArtistId;
+                            }
+
+                            if (track.HasValue)
+                                file.Tag.Track = track.Value;
+
+                            if (string.IsNullOrEmpty(thumbnailPath) == false)
+                            {
+                                Picture picture = new Picture();
+                                picture.Type = PictureType.FrontCover;
+                                picture.MimeType = "image/png";
+                                picture.Description = "Cover";
+                                picture.Data = ByteVector.FromPath(thumbnailPath);
+
+                                file.Tag.Pictures = new TagLib.Picture[] { picture };
+                            }
+
+                            if (genres != null)
+                                file.Tag.Genres = genres.Where(x => x.Value >= 0).Select(x => x.Key).ToArray();
+
+                            if (year.HasValue)
+                                file.Tag.Year = year.Value;
+
+                            file.Save();
+                            System.IO.File.Delete(thumbnailPath);
+                            Console.WriteLine($"File tagged: {file.Tag.Title} {file.Tag.Performers?.FirstOrDefault()}");
                         }
                         else
-                            Console.WriteLine($"Fingerprint error. Couldn't find best recording");
+                            Console.WriteLine($"Fingerprint error. Couldn't find best recording. Skipping {filePath}");
                     }
                 }
-
-                var thumbnailPath = "";
-                if (string.IsNullOrEmpty(albumArtURL) == false) //get album from musicbrainz
-                {
-                    thumbnailPath = await YoutubeExplodeClient.DownloadThumbnail(albumArtURL, id.Replace("-", ""), FolderPath, "png", false);
-                }
-
-                //taglib
-                Console.WriteLine($"Tagging file: {filePath}");
-                var file = TagLib.File.Create(filePath);
-                file.Tag.Title = YoutubeExplodeClient.MakeTagName(songTitle);
-                file.Tag.Performers = artists.ToArray();
-                file.Tag.Album = YoutubeExplodeClient.MakeTagName(album);
-
-                if (string.IsNullOrEmpty(MusicBrainzReleaseId) == false)
-                    file.Tag.MusicBrainzReleaseId = MusicBrainzReleaseId;
-                if (string.IsNullOrEmpty(MusicBrainzTrackId) == false)
-                    file.Tag.MusicBrainzTrackId = MusicBrainzTrackId;
-                if (string.IsNullOrEmpty(MusicBrainzReleaseArtistId) == false)
-                {
-                    file.Tag.MusicBrainzReleaseArtistId = MusicBrainzReleaseArtistId;
-                    file.Tag.MusicBrainzArtistId = MusicBrainzReleaseArtistId;
-                }
-
-                if (track.HasValue)
-                    file.Tag.Track = track.Value;
-
-                if (string.IsNullOrEmpty(thumbnailPath) == false)
-                {
-                    Picture picture = new Picture();
-                    picture.Type = PictureType.FrontCover;
-                    picture.MimeType = "image/png";
-                    picture.Description = "Cover";
-                    picture.Data = ByteVector.FromPath(thumbnailPath);
-
-                    file.Tag.Pictures = new TagLib.Picture[] { picture };
-                }
-
-                if (genres != null)
-                    file.Tag.Genres = genres.Where(x => x.Value >= 0).Select(x => x.Key).ToArray();
-
-                if (year.HasValue)
-                    file.Tag.Year = year.Value;
-
-                file.Save();
-                System.IO.File.Delete(thumbnailPath);
-                Console.WriteLine($"File tagged: {file.Tag.Title} {file.Tag.Performers?.FirstOrDefault()}");
             }
             catch (Exception ex)
             {

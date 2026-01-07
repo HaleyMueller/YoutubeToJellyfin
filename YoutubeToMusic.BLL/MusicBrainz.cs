@@ -539,7 +539,7 @@ namespace YoutubeToMusic.BLL
 
             var replacements = new Dictionary<char, string>
             {
-                { '"', "'" },    // Replace quotes with apostrophe
+                { '"', "_" },    // Replace quotes with apostrophe
                 { '?', "" },     // Drop question marks
                 { '*', "" },     // Drop asterisks
                 { '<', "(" },    // Replace < with (
