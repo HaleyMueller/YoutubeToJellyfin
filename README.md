@@ -8,7 +8,6 @@ A small cross platform program that can convert youtube video links, playlists, 
 - Auto moves files into the Jellyfin folder format
 
 ## Prerequisites
-- If you are running the contained release, you don't need to install .NET. If you aren't, you need .NET 8 (Runtime for running it, and/or SDK for running developing the project) [link](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
 - FFMPEG runable from console [link](https://www.ffmpeg.org/download.html)
 
 ## Usage
