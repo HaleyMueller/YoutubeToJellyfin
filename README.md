@@ -17,6 +17,8 @@ A small cross platform program that can convert youtube video links, playlists, 
 -  -qf queryFile.txt  (file of queries)
 -  -f  urls.txt       (file of urls)
 -  -cf                (create folders for Jellyfin)
+-  -mf                (applies metadata to a file)
+-  -mr                (applies metadata to each file in a folder)
 
 ## How To Build
 - dotnet build `YoutubeToMusic.TestConsole`
