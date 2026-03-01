@@ -144,24 +144,31 @@ namespace YoutubeToMusic.BLL
                 var best = await BestRecording(rrr.Results.ToList());
                 var gre = await GetGenres(best.Recording);
 
-                foreach (var medium in best.Release?.Media)
+                if (best.Release != null)
                 {
-                    if (best.Track != null)
-                        continue;
-
-                    foreach (var track in medium?.Tracks)
+                    foreach (var medium in best.Release?.Media)
                     {
-                        if (track.Title == best.Recording.Title)
+                        if (best.Track != null)
+                            continue;
+
+                        foreach (var track in medium?.Tracks)
                         {
-                            best.Track = track;
-                            break;
+                            if (track.Title == best.Recording.Title)
+                            {
+                                best.Track = track;
+                                break;
+                            }
                         }
                     }
+
+                    Console.WriteLine($"Best recording picked: Score: {best.Score} Title: {best.Recording.Title} Album: {best.Release.Title} Artists: {string.Join(",", best.Recording.ArtistCredit.Select(x => x.Name))} Album Url: {best.AlbumArtUri}");
+                }
+                else
+                {
+                    ret.AddError($"No recordings were found for: {video.Id} {video.Title}");
                 }
 
                 Console.WriteLine($"Found {rrr.TotalResults} recordings");
-
-                Console.WriteLine($"Best recording picked: Score: {best.Score} Title: {best.Recording.Title} Album: {best.Release.Title} Artists: {string.Join(",", best.Recording.ArtistCredit.Select(x => x.Name))} Album Url: {best.AlbumArtUri}");
 
                 ret.Data = best;
             }
@@ -371,7 +378,25 @@ namespace YoutubeToMusic.BLL
                 }
             }
 
-            return null;
+            var ret = new RecordingRelease();
+
+            var bestRecording = orderedRecordings?.FirstOrDefault();
+
+            if (bestRecording != null)
+            {
+                ret.Recording = bestRecording;
+
+                var bestRelease = bestRecording.Releases?.FirstOrDefault();
+
+                if (bestRelease != null)
+                {
+                    ret.Release = bestRelease;
+                    ret.AlbumArtUri = $"https://coverartarchive.org/release/{bestRelease.Id}/front";
+                }
+            }
+
+
+            return ret;
         }
 
         public async Task<RecordingRelease> BestRecording(List<ISearchResult<IRecording>> recordings)
@@ -432,13 +457,13 @@ namespace YoutubeToMusic.BLL
 
                     if (string.IsNullOrEmpty(file.Tag.FirstPerformer)) 
                     {
-                        ret.AddError("No performer was tagged on the file. Skipping...");
+                        ret.AddError($"No performer was tagged on the file. Skipping... {filePath}");
                         continue;
                     }
 
                     if (string.IsNullOrEmpty(file.Tag.Album))
                     {
-                        ret.AddError("No album was tagged on the file. Skipping...");
+                        ret.AddError($"No album was tagged on the file. Skipping... {filePath}");
                         continue;
                     }
 
@@ -462,7 +487,8 @@ namespace YoutubeToMusic.BLL
                     NfoGenerator.CreateArtistNfo(file, nfoArtistPath);
                     //NfoGenerator.CreateMusicVideoNfo(filePath, nfoSongPath);
 
-                    File.Copy(filePath, songPath, true);
+                    File.Move(filePath, songPath, true);
+                    //File.Copy(filePath, songPath, true);
                 }
                 catch (Exception ex)
                 {

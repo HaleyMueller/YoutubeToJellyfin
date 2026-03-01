@@ -128,7 +128,40 @@ namespace YoutubeToMusic.BLL
             }
             catch (Exception ex)
             {
-                ret.AddException(ex);
+                ret.AddMessage("Youtube Explode has failed, trying yt-dlp", DataEntities.StatusEnum.Warning);
+
+                var path = FolderPath;
+
+                var fullPath = Path.Combine(FolderPath, MakeValidFileName($"{video.Title.Replace(".", "")}.{"opus"}"));
+
+                //if (System.OperatingSystem.IsWindows())
+                //    path += "\\";
+                //else
+                //    path += "/";
+
+                //path += "%(title)s.%(ext)s";
+
+                try
+                {
+                    var response = await YT_DLP.DownloadVideo(fullPath, video.Id);
+
+                    if (response.Item1 == false)
+                    {
+                        ret.AddError(video.Title + " " + video.Url + " " + response.Item2);
+                        return ret;
+                    }
+
+                    var convertedAudioPath = Path.Combine(FolderPath, MakeValidFileName($"{video.Title.Replace(".", "")}.ogg"));
+
+                    Console.WriteLine($"Coverting in ffmpeg: {fullPath}");
+                    await FFMPEG.ConvertFile(fullPath, convertedAudioPath);
+                    Console.WriteLine($"Converstion done. Made new file: {convertedAudioPath}");
+                    ret.Data = convertedAudioPath;
+                }
+                catch (Exception exx)
+                {
+                    ret.AddException(exx);
+                }
                 return ret;
             }
 
@@ -382,6 +415,21 @@ namespace YoutubeToMusic.BLL
                 var split = videoTitle.ToLower().Split("from");
                 authorName = split.LastOrDefault();
                 videoTitle = split.FirstOrDefault();
+            }
+
+            if (string.IsNullOrEmpty(videoTitle))
+            {
+                if (match.Success)
+                {
+                    string title = match.Groups[1].Value;
+
+                    videoTitle = title;
+                }
+
+                if (string.IsNullOrEmpty(videoTitle))
+                {
+                    videoTitle = video.Title;
+                }
             }
 
             videoTitle = videoTitle.Trim();

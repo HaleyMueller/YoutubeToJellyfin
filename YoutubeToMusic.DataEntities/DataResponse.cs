@@ -14,6 +14,21 @@ namespace YoutubeToMusic.DataEntities
         Error
     }
 
+    public class ResponseMessage
+    {
+        public DateTime DateTime { get; set; } = DateTime.Now;
+        public StatusEnum Status { get; set; }
+        public string Message { get; set; }
+        public Exception? Exception { get; set; }
+
+        public string MessageAppend { get; set; } //better way to do this??>????
+
+        public override string ToString()
+        {
+            return $"[{Status}]{MessageAppend} {this.DateTime.ToShortTimeString()} - {this.Message}";
+        }
+    }
+
     public class DataResponse<T>
     {
         public string MessageAppender { get; set; }
@@ -54,20 +69,7 @@ namespace YoutubeToMusic.DataEntities
             this.MessageAppender = appendedMessage;
         }
 
-        public class ResponseMessage
-        {
-            public DateTime DateTime { get; set; } = DateTime.Now;
-            public StatusEnum Status { get; set; }
-            public string Message { get; set; }
-            public Exception? Exception { get; set; }
-
-            public string MessageAppend { get; set; } //better way to do this??>????
-
-            public override string ToString()
-            {
-                return $"[{Status}]{MessageAppend} {this.DateTime.ToShortTimeString()} - {this.Message}";
-            }
-        }
+       
 
         public DataResponse<T> AddException(Exception exception)
         {

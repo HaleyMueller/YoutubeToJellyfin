@@ -2,7 +2,7 @@
   "profiles": {
     "YoutubeToMusic.TestConsole": {
       "commandName": "Project",
-      "commandLineArgs": "-v https://www.youtube.com/watch?v=qNR-d36CkhA -cf"
+      "commandLineArgs": "-p https://www.youtube.com/watch?v=zmTtHcm7z3Y&list=PL-gPwu7HXv9JoCaXLjALGA7keKQSOX-9f -cf"
     }
   }
 }

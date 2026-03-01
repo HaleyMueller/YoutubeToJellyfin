@@ -62,7 +62,7 @@ namespace YoutubeToMusic.BLL
                 {
                     var r = new DataEntities.DataResponse<bool>();
 
-                    r.ResponseMessages = DataEntities.DataResponse<bool>.CopyMessages(r);
+                    r.ResponseMessages = audioFilePath.ResponseMessages;
 
                     return r;
                 }
@@ -79,26 +79,35 @@ namespace YoutubeToMusic.BLL
                     {
                         Console.WriteLine("Was able to fingerprint song");
 
-                        var bestRecording = await _musicBrainz.BestRecording(fingerprint.Data.results.FirstOrDefault().recordings.Select(x => x.id).ToList(), duration);
+                        var recordings = fingerprint.Data.results.FirstOrDefault().recordings;
 
-                        if (bestRecording.HasError == false)
+                        if (recordings != null)
                         {
-                            songTitle = bestRecording.Data.Recording.Title;
-                            album = bestRecording.Data.Release.Title;
-                            artists = bestRecording.Data.Artists?.Select(x => x.Name).ToList();
-                            albumArtURL = bestRecording.Data.AlbumArtUri;
-                            genres = bestRecording.Data.Genres;
-                            id = bestRecording.Data.Recording.Id.ToString();
+                            var bestRecording = await _musicBrainz.BestRecording(recordings.Select(x => x.id).ToList(), duration);
 
-                            if (bestRecording.Data.Recording.FirstReleaseDate != null && bestRecording.Data.Recording.FirstReleaseDate.Year != null)
-                                year = uint.Parse(bestRecording.Data.Recording.FirstReleaseDate.Year.ToString());
+                            if (bestRecording.HasError == false)
+                            {
+                                songTitle = bestRecording.Data.Recording.Title;
+                                album = bestRecording.Data.Release.Title;
+                                artists = bestRecording.Data.Artists?.Select(x => x.Name).ToList();
+                                albumArtURL = bestRecording.Data.AlbumArtUri;
+                                genres = bestRecording.Data.Genres;
+                                id = bestRecording.Data.Recording.Id.ToString();
 
-                            MusicBrainzReleaseArtistId = bestRecording.Data.Artists.FirstOrDefault().Artist.Id.ToString();
-                            MusicBrainzTrackId = bestRecording.Data.Recording.Id.ToString();
-                            MusicBrainzReleaseId = bestRecording.Data.Release.Id.ToString();
+                                if (bestRecording.Data.Recording.FirstReleaseDate != null && bestRecording.Data.Recording.FirstReleaseDate.Year != null)
+                                    year = uint.Parse(bestRecording.Data.Recording.FirstReleaseDate.Year.ToString());
 
-                            if (bestRecording.Data.Track != null)
-                                track = uint.Parse(bestRecording.Data.Track.Number);
+                                MusicBrainzReleaseArtistId = bestRecording.Data.Artists.FirstOrDefault().Artist.Id.ToString();
+                                MusicBrainzTrackId = bestRecording.Data.Recording.Id.ToString();
+                                MusicBrainzReleaseId = bestRecording.Data.Release.Id.ToString();
+
+                                if (bestRecording.Data.Track != null)
+                                    track = uint.Parse(bestRecording.Data.Track.Number);
+                            }
+                        }
+                        else
+                        {
+                            ret.AddWarning($"{video.Id} - {video.Title}: Weirdly the song was fingerprinted but there is no recordings. Can't put musicbrainz data on the song...");
                         }
                     }
                 }
@@ -123,12 +132,12 @@ namespace YoutubeToMusic.BLL
                         if (musicBrainzLookup.Data.Recording.FirstReleaseDate != null && musicBrainzLookup.Data.Recording.FirstReleaseDate.Year != null)
                             year = uint.Parse(musicBrainzLookup.Data.Recording.FirstReleaseDate.Year.ToString());
 
-                        MusicBrainzReleaseArtistId = musicBrainzLookup.Data.Artists.FirstOrDefault().Artist.Id.ToString();
+                        MusicBrainzReleaseArtistId = musicBrainzLookup.Data.Artists?.FirstOrDefault().Artist.Id.ToString();
                         MusicBrainzTrackId = musicBrainzLookup.Data.Recording.Id.ToString();
                         MusicBrainzReleaseId = musicBrainzLookup.Data.Release.Id.ToString();
 
                         if (musicBrainzLookup.Data.Track != null)
-                            track = uint.Parse(musicBrainzLookup.Data.Track.Number);
+                            track = uint.Parse(Regex.Match(musicBrainzLookup.Data.Track.Number, @"\d+").Value);
                     }
                 }
 
@@ -201,7 +210,7 @@ namespace YoutubeToMusic.BLL
             }
             catch (Exception ex)
             {
-                ret.AddException(ex);
+                ret.AddError($"{video.Id} - {video.Title}: {ex}");
             }
 
             ret.Data = true;
@@ -383,7 +392,7 @@ namespace YoutubeToMusic.BLL
 
                     var response = await ConvertFromVideoURLAsync(URL);
 
-                    ret.ResponseMessages = DataEntities.DataResponse<bool>.CopyMessages(response);
+                    ret.ResponseMessages.AddRange(response.ResponseMessages);
                 }
 
                 return ret;
@@ -442,7 +451,7 @@ namespace YoutubeToMusic.BLL
                 {
                     var response = await ConvertFromVideoURLAsync(video.Url);
 
-                    ret.ResponseMessages = DataEntities.DataResponse<bool>.CopyMessages(response);
+                    ret.ResponseMessages.AddRange(response.ResponseMessages);
                 }
 
                 return ret;
@@ -468,7 +477,7 @@ namespace YoutubeToMusic.BLL
 
                     var response = await ConvertFromVideoQueryAsync(query);
 
-                    ret.ResponseMessages = DataEntities.DataResponse<bool>.CopyMessages(response);
+                    ret.ResponseMessages.AddRange(response.ResponseMessages);
                 }
 
                 return ret;
